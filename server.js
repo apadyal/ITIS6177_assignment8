@@ -2,6 +2,8 @@ const express = require('express');
 const app = express();
 const port = 3000;
 
+const axios = require('axios');
+
 const mariadb = require('mariadb');
 const pool = mariadb.createPool({
     host: 'localhost',
@@ -546,6 +548,44 @@ app.put('/student/:class/:section/:rollId', (req, res) => {
         });
 });
 
+/**
+ * @swagger
+ * /say:
+ *    get:
+ *      description: Returns a custom message from the lambda function hosted on AWS
+ *      produces:
+ *          - application/json
+ *      parameters:
+ *         - name: keyword
+ *           in: query
+ *           description: keyword to embed in a sentence.
+ *           required: true
+ *           schema:
+ *           type: string
+ *           format: string
+ *      responses:
+ *          200:
+ *              description: custom message from the lambda function
+ * 
+ */
+app.get('/say', async (req, res) => {
+
+            var keyword = req.query.keyword;
+
+            await axios.get(`https://9gn19mnqx1.execute-api.us-east-2.amazonaws.com/main?keyword=` + keyword)
+            .then(function (response) {
+                res.json(response.data);
+            })
+            .catch(err => {
+                console.error(err);
+                res.status(503);
+                var result = {
+                    "status": "Internal error",
+                    "object": req.body
+                }
+                res.json(result);
+            });
+});
 
 app.listen(port, () => {
     console.log(`Server listening at http://localhost:${port}`)
